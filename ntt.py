@@ -46,6 +46,38 @@ def INTT_Radix2(A):
         y[j + n//2] = (ye[j] - r) % P
     return y
 
+def NTT_Radix4(A):
+    n = len(A)
+    if n == 1:
+        return A
+    gn = qpow(G, (P-1)//n, P)
+    A0, A1, A2, A3 = A[::4], A[1::4], A[2::4], A[3::4]
+    y0, y1, y2, y3 = NTT_Radix4(A0), NTT_Radix4(A1), NTT_Radix4(A2), NTT_Radix4(A3)
+    y = [0] * n
+    g = 1
+    for j in range(n//4):
+        y[j]          = (y0[j] + qpow(gn, 1*j, P)          * y1[j] + qpow(gn, 2*j, P)          * y2[j] + qpow(gn, 3*j, P)          * y3[j]) % P
+        y[j + n*1//4] = (y0[j] + qpow(gn, 1*(j+n*1//4), P) * y1[j] + qpow(gn, 2*(j+n*1//4), P) * y2[j] + qpow(gn, 3*(j+n*1//4), P) * y3[j]) % P
+        y[j + n*2//4] = (y0[j] + qpow(gn, 1*(j+n*2//4), P) * y1[j] + qpow(gn, 2*(j+n*2//4), P) * y2[j] + qpow(gn, 3*(j+n*2//4), P) * y3[j]) % P
+        y[j + n*3//4] = (y0[j] + qpow(gn, 1*(j+n*3//4), P) * y1[j] + qpow(gn, 2*(j+n*3//4), P) * y2[j] + qpow(gn, 3*(j+n*3//4), P) * y3[j]) % P
+    return y
+
+def INTT_Radix4(A):
+    n = len(A)
+    if n == 1:
+        return A
+    gn = qpow(GI, (P-1)//n, P)
+    A0, A1, A2, A3 = A[::4], A[1::4], A[2::4], A[3::4]
+    y0, y1, y2, y3 = INTT_Radix4(A0), INTT_Radix4(A1), INTT_Radix4(A2), INTT_Radix4(A3)
+    y = [0] * n
+    g = 1
+    for j in range(n//4):
+        y[j]          = (y0[j] + qpow(gn, 1*j, P)          * y1[j] + qpow(gn, 2*j, P)          * y2[j] + qpow(gn, 3*j, P)          * y3[j]) % P
+        y[j + n*1//4] = (y0[j] + qpow(gn, 1*(j+n*1//4), P) * y1[j] + qpow(gn, 2*(j+n*1//4), P) * y2[j] + qpow(gn, 3*(j+n*1//4), P) * y3[j]) % P
+        y[j + n*2//4] = (y0[j] + qpow(gn, 1*(j+n*2//4), P) * y1[j] + qpow(gn, 2*(j+n*2//4), P) * y2[j] + qpow(gn, 3*(j+n*2//4), P) * y3[j]) % P
+        y[j + n*3//4] = (y0[j] + qpow(gn, 1*(j+n*3//4), P) * y1[j] + qpow(gn, 2*(j+n*3//4), P) * y2[j] + qpow(gn, 3*(j+n*3//4), P) * y3[j]) % P
+    return y
+
 def NTT(a, is_forward=True):
     """another way of ntt implementation"""
     n = len(a)
@@ -77,9 +109,9 @@ def test1():
     p = [random.randint(0, 15) for i in range(N)]
     # p = list(range(16))
     print("p: ", p)
-    ntt_out = NTT_Radix2(p)
+    ntt_out = NTT_Radix4(p)
     print("ntt(p):", ntt_out)
-    intt_out = INTT_Radix2(ntt_out)
+    intt_out = INTT_Radix4(ntt_out)
     intt_out = [v * qpow(N, P-2, P) % P for v in intt_out]
     print("intt(ntt(p)): ", intt_out)
 
