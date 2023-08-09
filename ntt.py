@@ -56,10 +56,14 @@ def NTT_Radix4(A):
     y = [0] * n
     g = 1
     for j in range(n//4):
-        y[j]          = (y0[j] + qpow(gn, 1*j, P)          * y1[j] + qpow(gn, 2*j, P)          * y2[j] + qpow(gn, 3*j, P)          * y3[j]) % P
-        y[j + n*1//4] = (y0[j] + qpow(gn, 1*(j+n*1//4), P) * y1[j] + qpow(gn, 2*(j+n*1//4), P) * y2[j] + qpow(gn, 3*(j+n*1//4), P) * y3[j]) % P
-        y[j + n*2//4] = (y0[j] + qpow(gn, 1*(j+n*2//4), P) * y1[j] + qpow(gn, 2*(j+n*2//4), P) * y2[j] + qpow(gn, 3*(j+n*2//4), P) * y3[j]) % P
-        y[j + n*3//4] = (y0[j] + qpow(gn, 1*(j+n*3//4), P) * y1[j] + qpow(gn, 2*(j+n*3//4), P) * y2[j] + qpow(gn, 3*(j+n*3//4), P) * y3[j]) % P
+        r1 = qpow(gn, 1*j, P) * y1[j]
+        r2 = qpow(gn, 2*j, P) * y2[j]
+        r3 = qpow(gn, 3*j, P) * y3[j]
+        gn_4 = qpow(gn, n//4, P)
+        y[j]          = (y0[j] +        r1 + r2 +        r3) % P
+        y[j + n*1//4] = (y0[j] + gn_4 * r1 - r2 - gn_4 * r3) % P
+        y[j + n*2//4] = (y0[j] -        r1 + r2 -        r3) % P
+        y[j + n*3//4] = (y0[j] - gn_4 * r1 - r2 + gn_4 * r3) % P
     return y
 
 def INTT_Radix4(A):
@@ -72,14 +76,18 @@ def INTT_Radix4(A):
     y = [0] * n
     g = 1
     for j in range(n//4):
-        y[j]          = (y0[j] + qpow(gn, 1*j, P)          * y1[j] + qpow(gn, 2*j, P)          * y2[j] + qpow(gn, 3*j, P)          * y3[j]) % P
-        y[j + n*1//4] = (y0[j] + qpow(gn, 1*(j+n*1//4), P) * y1[j] + qpow(gn, 2*(j+n*1//4), P) * y2[j] + qpow(gn, 3*(j+n*1//4), P) * y3[j]) % P
-        y[j + n*2//4] = (y0[j] + qpow(gn, 1*(j+n*2//4), P) * y1[j] + qpow(gn, 2*(j+n*2//4), P) * y2[j] + qpow(gn, 3*(j+n*2//4), P) * y3[j]) % P
-        y[j + n*3//4] = (y0[j] + qpow(gn, 1*(j+n*3//4), P) * y1[j] + qpow(gn, 2*(j+n*3//4), P) * y2[j] + qpow(gn, 3*(j+n*3//4), P) * y3[j]) % P
+        r1 = qpow(gn, 1*j, P) * y1[j]
+        r2 = qpow(gn, 2*j, P) * y2[j]
+        r3 = qpow(gn, 3*j, P) * y3[j]
+        gn_4 = qpow(gn, n//4, P)
+        y[j]          = (y0[j] +        r1 + r2 +        r3) % P
+        y[j + n*1//4] = (y0[j] + gn_4 * r1 - r2 - gn_4 * r3) % P
+        y[j + n*2//4] = (y0[j] -        r1 + r2 -        r3) % P
+        y[j + n*3//4] = (y0[j] - gn_4 * r1 - r2 + gn_4 * r3) % P
     return y
 
 def NTT(a, is_forward=True):
-    """another way of ntt implementation"""
+    """another way of ntt implementation, i dont like it"""
     n = len(a)
     nbit = math.ceil(math.log2(n))
     rev = list(range(n))
