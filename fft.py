@@ -2,6 +2,7 @@ import random
 import math
 from math import pi, sin, cos
 import copy
+import numpy as np
 
 J = complex(0,1)
 
@@ -74,7 +75,7 @@ def FFT_Radix2(P):
     n = len(P)
     if n == 1:
         return P
-    phi = 2 * pi / n
+    phi = -2 * pi / n
     w = complex(cos(phi), sin(phi))
     Pe, Po = P[::2], P[1::2]
     ye, yo = FFT_Radix2(Pe), FFT_Radix2(Po)
@@ -89,7 +90,7 @@ def IFFT_Radix2(P):
     n = len(P)
     if n == 1:
         return P
-    phi = -2 * pi / n
+    phi = 2 * pi / n
     w = complex(cos(phi), sin(phi))
     Pe, Po = P[::2], P[1::2]
     ye, yo = IFFT_Radix2(Pe), IFFT_Radix2(Po)
@@ -137,11 +138,14 @@ def test1():
     N = 16
     p = [random.randint(-8, 7) for i in range(N)]
     print("p: ", p)
+    print("np fft:", np.fft.fft(p))
     fft_out = FFT_Radix2(p)
     print("fft: ", fft_out)
     ifft_out = IFFT_Radix2(fft_out)
-    ifft_out = [v / N for v in ifft_out]
+    ifft_out = [round(v.real / N) for v in ifft_out]
     print("ifft: ", ifft_out)
+    err_rate = sum([1 if p[i]!=ifft_out[i] else 0 for i in range(N)]) / N
+    print(f"Error rate: {err_rate}")
 
 def test1_2():
     print("##### test fft and ifft #####")
@@ -205,9 +209,9 @@ def test3():
     print(f"the product is {result}")
 
 if __name__ == "__main__":
-    # test1()
-    test1_2()
+    test1()
+    # test1_2()
     # test2()
-    test2_2()
+    # test2_2()
     # test3()
 
