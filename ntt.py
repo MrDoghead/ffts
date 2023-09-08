@@ -3,7 +3,28 @@ import math
 # define some constants
 P = 998244353
 G = 3
-GI = 332748118
+GI = 332748118 # G * GI mod P = 1 
+
+class BarrettReducer:
+    """https://www.nayuki.io/page/barrett-reduction-algorithm"""
+    modulus: int
+    shift: int
+    factor: int
+    def __init__(self, mod: int):
+        if mod <= 0:
+            raise ValueError("Modulus must be positive")
+        if mod & (mod - 1) == 0:
+            raise ValueError("Modulus must not be a power of 2")
+        self.modulus = mod
+        self.shift = mod.bit_length() * 2
+        self.factor = (1 << self.shift) // mod
+
+    # For x in [0, mod^2), this returns x % mod.
+    def reduce(self, x: int) -> int:
+        mod = self.modulus
+        assert 0 <= x < mod**2
+        t = (x - ((x * self.factor) >> self.shift) * mod)
+        return t if (t < mod) else (t - mod)
 
 def qpow(a, n, p):
     """a^n mod p"""
@@ -85,8 +106,8 @@ def INTT_Radix4(A):
         y[j + n*3//4] = (y0[j] - gi1_4 * r1 - r2 + gi1_4 * r3) % P
     return y
 
+"""another way of ntt implementation, i dont like it"""
 def NTT(a, is_forward=True):
-    """another way of ntt implementation, i dont like it"""
     n = len(a)
     nbit = math.ceil(math.log2(n))
     rev = list(range(n))
@@ -109,6 +130,21 @@ def NTT(a, is_forward=True):
         for i in range(n):
             y[i] = y[i] * inv % P
     return y
+
+def bitslicing(p, n):
+    """slice a polynomial p into n bit slices"""
+    bit_slices = []
+    for i in range(n):
+        bit_slices.append([0] * len(p))
+    for i in range(len(p)):
+        x = p[i]
+        cnt = 0
+        while x > 0 and cnt < n:
+            if x & 1:
+                bit_slices[cnt][i] = 1
+            x = x >> 1
+            cnt += 1
+    return bit_slices
 
 def test1():
     print("##### test ntt and intt #####")
@@ -142,8 +178,87 @@ def test2():
         result += round(intt_out[i]) * 10**i
     print(f"Recover the product: {result}")
 
+def test3():
+    print("##### test bitslicing ntt #####")
+    N = 16
+    k = 4
+    p1 = [random.randint(0, 2**k-1) for i in range(N)]
+    p2 = [random.randint(0, 2**k-1) for i in range(N)]
+    print(f"p1 = {p1}\np2 = {p2}")
+
+    # bit slicing
+    print("\n***** bit slicing *****")
+    bit_slices1 = bitslicing(p1, k)
+    bit_slices2 = bitslicing(p2, k)
+    print("Bit slices of p1: ")
+    for each in bit_slices1:
+        print(each)
+    print("Bit slices of p2: ")
+    for each in bit_slices2:
+        print(each)
+
+    # ntt(p1)
+    print("\n***** ntt(p1) *****")
+    ntt_out_bp1 = []
+    for bp in bit_slices1:
+        ntt_out_tmp = NTT_Radix2(bp)
+        print("bitslice ntt result:", ntt_out_tmp)
+        ntt_out_bp1.append(ntt_out_tmp)
+    ntt_out1 = [0] * N
+    for i in range(N):
+        for j in range(k):
+            ntt_out1[i] = (ntt_out1[i]  + (ntt_out_bp1[j][i] << j)) % P
+    print("ntt_out1:", ntt_out1)
+    # ans for p1
+    ntt_ans1 = NTT_Radix2(p1)
+    print("ntt_ans1:", ntt_ans1)
+
+    # ntt(p2)
+    print("\n***** ntt(p2) *****")
+    ntt_out_bp2 = []
+    for bp in bit_slices2:
+        ntt_out_tmp = NTT_Radix2(bp)
+        print("bitslice ntt result:", ntt_out_tmp)
+        ntt_out_bp2.append(ntt_out_tmp)
+    ntt_out2 = [0] * N
+    for i in range(N):
+        for j in range(k):
+            ntt_out2[i] = (ntt_out2[i]  + (ntt_out_bp2[j][i] << j)) % P
+    print("ntt_out2:", ntt_out2)
+    # ans for p2
+    ntt_ans2 = NTT_Radix2(p2)
+    print("ntt_ans2:", ntt_ans2)
+
+    # ntt(p1) * ntt(p2) and bitslice the product
+    print("\n***** product and bit slicing *****")
+    prod = [ntt_out1[i] * ntt_out2[i] for i in range(N)]
+    print("ntt(p1) * ntt(p2):", prod)
+    k2 = 32*2
+    prod_bit_slices = bitslicing(prod, k2)
+    print("Bit slices of prod: ")
+    for each in prod_bit_slices:
+        print(each)
+
+    # intt(prod)
+    print("\n***** intt(prod) *****")
+    intt_out_bp = []
+    for bp in prod_bit_slices:
+        intt_out_tmp = INTT_Radix2(bp)
+        intt_out_bp.append(intt_out_tmp)
+    intt_out = [0] * N
+    for i in range(N):
+        for j in range(k2):
+            intt_out[i] = (intt_out[i]  + (intt_out_bp[j][i] << j)) % P
+    print("intt_out:", intt_out)
+    # ans for intt
+    prod_ans = [ntt_ans1[i] * ntt_ans2[i] for i in range(N)]
+    intt_ans = INTT_Radix2(prod_ans)
+    print("intt_ans:", intt_ans)
+
+
 if __name__ == "__main__":
-    test1()
+    # test1()
     # test2()
+    test3()
 
 
