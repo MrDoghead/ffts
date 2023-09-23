@@ -6,6 +6,18 @@ import numpy as np
 
 J = complex(0,1)
 
+def get_Vandermonde(n, forward=True):
+    V = np.zeros((n,n), dtype=np.complex64)
+    if forward:
+        phi = - 2 * np.pi / n
+    else:
+        phi = 2 * np.pi / n
+    w = complex(np.cos(phi), np.sin(phi))
+    for i in range(n):
+        for j in range(n):
+            V[i,j] = w ** (i*j)
+    return V
+
 def fft_radix2_inplace(a, is_forward=True):
     n = len(a)
     nbit = math.ceil(math.log2(n))
@@ -96,6 +108,7 @@ def IFFT_Radix2(P):
     ye, yo = IFFT_Radix2(Pe), IFFT_Radix2(Po)
     y = [0] * n 
     for j in range(n//2):
+        # print(f"{n} {w**j}")
         y[j] = ye[j] + w**j * yo[j]
         y[j + n//2] = ye[j] - w**j * yo[j]
     return y
@@ -135,7 +148,7 @@ def IFFT_Radix4(P):
 
 def test1():
     print("##### test fft and ifft #####")
-    N = 16
+    N = 8
     p = [random.randint(-8, 7) for i in range(N)]
     print("p: ", p)
     print("np fft:", np.fft.fft(p))
@@ -208,10 +221,81 @@ def test3():
         result += round(p3[i].real) * 10**i
     print(f"the product is {result}")
 
+def test4():
+    print("##### test Vandermonde matrix #####")
+    N = 8
+    V = get_Vandermonde(N)
+    sparse_cnt = 0
+    for i in range(N):
+        msg = ""
+        for j in range(N):
+            if (np.abs(np.real(V[i,j])) < 1e-5) or (np.abs(np.imag(V[i,j])) < 1e-5):
+                sparse_cnt += 1
+            if np.imag(V[i,j]) >= 0:
+                msg += "{:.2f}+{:.2f}J".format(np.real(V[i,j]), np.imag(V[i,j])) + ",\t"
+            else:
+                msg += "{:.2f}{:.2f}J".format(np.real(V[i,j]), np.imag(V[i,j])) + ",\t"
+        print(msg)
+
+    print(f"sparse rate = {sparse_cnt}/{N*N} = {sparse_cnt / (N*N)}")
+
+    p = np.random.randint(0,15, (N,))
+    print("p:", p)
+    p = p.astype(np.complex64)
+    res = np.dot(V,p)
+    print("V@p:", res)
+
+    ans = np.fft.fft(p)
+    print("Ans:", ans)
+
+def test5():
+    print("##### compute 12345*67890=838102050 using Vandermonde matrix #####")
+
+    N = 16
+    V = get_Vandermonde(N)
+    IV = get_Vandermonde(N, False)
+
+    P1 = np.array([5, 4, 3, 2, 1] + [0] * (N-5))
+    print("P1:", P1)
+    P1 = P1.astype(np.complex64)
+    fft_out1 = np.dot(V, P1)
+    print("fft_out1:", fft_out1)
+
+    P2 = np.array([0, 9, 8, 7, 6] + [0] * (N-5))
+    print("P2:", P2)
+    P2 = P2.astype(np.complex64)
+    fft_out2 = np.dot(V, P2)
+    print("fft_out2:", fft_out2)
+
+    imm_out = np.multiply(fft_out1, fft_out2)
+    print("imm_out:", imm_out)
+
+    ifft_out = np.dot(IV, imm_out)
+    ifft_out = ifft_out / N
+    print("ifft_out:", ifft_out)
+
+    result = 0
+    for i in range(N):
+        result += round(np.real(ifft_out[i])) * 10**i
+    print(f"the product is {result}")
+
+
 if __name__ == "__main__":
-    test1()
+    # test1()
     # test1_2()
     # test2()
     # test2_2()
     # test3()
+    # test4()
+    # test5()
+
+    N = 8
+    V = get_Vandermonde(N, True)
+    V_real = V.real
+    V_imag = V.imag
+    np.savetxt(f"V_{N}_real.csv", V_real, delimiter=",", fmt="%.5f")
+    np.savetxt(f"V_{N}_imag.csv", V_imag, delimiter=",", fmt="%.5f")    
+
+
+
 

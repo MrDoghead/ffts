@@ -1,5 +1,6 @@
 import random
 import math
+import numpy as np
 # define some constants
 P = 998244353
 G = 3
@@ -36,6 +37,17 @@ def qpow(a, n, p):
         a = (a * a) % p
         n >>= 1
     return ans
+
+def get_ntt_matrix(n, forward=True):
+    V = np.zeros((n,n), dtype=np.int64)
+    if forward:
+        gn = qpow(G, (P-1)//n, P)
+    else:
+        gn = qpow(GI, (P-1)//n, P)
+    for i in range(n):
+        for j in range(n):
+            V[i,j] = qpow(gn, i*j, P)
+    return V
 
 def NTT_Radix2(A):
     n = len(A)
@@ -149,8 +161,8 @@ def bitslicing(p, n):
 def test1():
     print("##### test ntt and intt #####")
     N = 16
-    p = [random.randint(0, 15) for i in range(N)]
-    # p = list(range(16))
+    # p = [random.randint(0, 15) for i in range(N)]
+    p = list(range(16)) * (N-15)
     print("p: ", p)
     ntt_out = NTT_Radix4(p)
     print("ntt(p):", ntt_out)
@@ -255,10 +267,32 @@ def test3():
     intt_ans = INTT_Radix2(prod_ans)
     print("intt_ans:", intt_ans)
 
+def test4():
+    N = 16
+
+    V = get_ntt_matrix(N, True)
+    print("V:", V)
+
+    p = np.arange(N)
+    print("p:", p)
+
+    ntt_out = NTT_Radix2(p)
+    print("ntt_out:", ntt_out)
+
+    ntt_out2 = np.dot(V, p)
+    ntt_out2 = ntt_out2 % P
+    print("ntt_out2:", ntt_out2)
 
 if __name__ == "__main__":
     # test1()
     # test2()
-    test3()
+    # test3()
+    # print(primitive_root(26, get_min=False))
+
+    N = 16
+    V = get_ntt_matrix(N, True)
+    np.savetxt(f"V_{N}_ntt.csv", V, delimiter=",", fmt="%d")
+
+
 
 
