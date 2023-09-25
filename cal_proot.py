@@ -10,18 +10,18 @@ we have 3^6 = 1 (mod 7)
 import math
 
 def is_prime(num):
-    print("* checking prime")
-    if num > 1:
-       for i in range(2, int(math.sqrt(num))):
-           if (num % i) == 0:
-               print(num, "is not a prime")
-               print(i,"乘于",num//i,"是",num)
-               return False
-       else:
-           print(num, "is a prime")
-           return True
-    else:
+    # print("* checking prime")
+    if num <= 1:
         return False
+    
+    for i in range(2, int(math.sqrt(num))+1):
+        if (num % i) == 0:
+        #    print(num, "is not a prime")
+        #    print(i,"乘于",num//i,"是",num)
+            return False
+    # print(num, "is a prime")
+    return True
+
 
 def qpow(a, n, p):
     """a^n mod p"""
@@ -72,12 +72,57 @@ def primitive_root(p, get_min=True):
         if gcd(g, p) != 1:
             continue
         if get_min_order(g, p, n) == n:
+            print("find proot:", g)
             primitive_roots.append(g)
             if get_min:
                 break
+        exit()
     return primitive_roots
 
+def get_prime_factors(n):
+    factors = []
+    x = 2
+    next_prime = False
+    while(x<=n):
+        # print(n, x)
+        if n % x == 0:
+            if x not in factors:
+                factors.append(x)
+            n = n // x
+        else:
+            next_prime = True
+        # get next prime
+        while(next_prime or not is_prime(x)):
+            x += 1
+            next_prime = False
+
+    return factors
+
+def fast_min_primitive_root(p):
+    """only work for prime number"""
+    assert(is_prime(p))
+
+    s = p - 1
+    factors = get_prime_factors(s)
+    ts = [s//v for v in factors]
+    for g in range(2, p):
+        # actually you can skip g=g_prev^2
+        cnt = 0
+        for t in ts:
+            if qpow(g, t, p) == 1:
+                break
+            else:
+                cnt += 1
+        if cnt == len(ts):
+            return g
+    return 0
+
 if __name__ == "__main__":
-    P = 998244353 
-    root = primitive_root(P, get_min=True)
+    P = 998244353
+    # P = 68719403009
+    # P = 68719230977
+    # P = 137438822401 
+    # root = primitive_root(P, get_min=True)
+    root = fast_min_primitive_root(P)
     print(root)
+
