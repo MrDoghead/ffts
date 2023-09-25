@@ -12,8 +12,24 @@ we have 3^6 = 1 (mod 7)
 #include <vector>
 using namespace std;
 
+typedef __int128_t int128;
+typedef unsigned long long uint64;
+
+inline void printInt128(int128 x)
+{
+    if (x < 0)
+    {
+        putchar('-');
+        x = -x;
+    }
+    if (x > 9)
+        printInt128(x / 10);
+    putchar(x % 10 + '0');
+}
+
 // Returns true if n is prime
-bool isPrime(long n)
+template <class T>
+T isPrime(T n)
 {
     cout << "* Checking prime" << endl;
     // Corner cases
@@ -27,7 +43,7 @@ bool isPrime(long n)
     if (n % 2 == 0 || n % 3 == 0)
         return false;
 
-    for (long i = 5; i * i <= n; i = i + 6)
+    for (T i = 5; i * i <= n; i = i + 6)
     {
         if (n % i == 0 || n % (i + 2) == 0)
         {
@@ -40,29 +56,28 @@ bool isPrime(long n)
 }
 
 /* Iterative Function to calculate (x^y)%p in O(logy) */
-long qpow(long x, long y, long p)
+template <class T>
+T qpow(T x, T y, T p)
 {
-    long res = 1; // Initialize result
+    T res = 1; // Initialize result
+    x = x % p;
 
-    x = x % p; // Update x if it is more than or
-    // equal to p
-
-    while (y > 0)
+    while (y != 0)
     {
         // If y is odd, multiply x with result
         if (y & 1)
             res = (res * x) % p;
 
-        // y must be even now
-        y = y >> 1; // y = y/2
+        y = y >> 1;
         x = (x * x) % p;
     }
     return res;
 }
 
-long gcd(long a, long b)
+template <class T>
+T gcd(T a, T b)
 {
-    long r = a % b;
+    T r = a % b;
     while (r != 0)
     {
         a = b;
@@ -72,47 +87,55 @@ long gcd(long a, long b)
     return b;
 }
 
-long eular(long x)
+template <class T>
+T eular(T x)
 {
     if (isPrime(x))
     {
-        cout << x << " is a prime" << endl;
+        cout << "a prime" << endl;
         return x - 1;
     }
-    cout << x << " is not a prime" << endl;
+    cout << "not a prime" << endl;
 
-    long cnt = 0;
-    for (long i = 1; i < x; i++)
+    T cnt = 0;
+    for (T i = 1; i < x; i++)
     {
         if (gcd(i, x) == 1)
         {
             cnt += 1;
         }
-        
     }
     return cnt;
 }
 
-long getMinOrder(long g, long n, long p)
+template <class T>
+T getMinOrder(T g, T n, T p)
 {
-    for (long i = 1; i < n+1; i++)
+    for (T i = 1; i < n + 1; i++)
     {
-        if (i % 1000000 == 0)
-            cout << "** cal order " << i << "..." << endl;
+        if (i % 1000000000 == 0)
+        {
+            printInt128(i);
+            cout << " ..." << endl;
+            // cout << "** cal order " << i << "..." << endl;
+        }
         if (qpow(g, i, p) == 1)
             return i;
     }
     return 0;
 }
 
-vector<long> findPrimitiveRoot(long x, bool get_min=true)
+template <class T>
+vector<T> findPrimitiveRoot(T x, bool get_min = true)
 {
-    long n = eular(x);
-    cout << "Eular: "<< n << endl;
-    vector<long> roots;
-    for (long g = 2; g < x; g++)
+    T n = eular(x);
+    // cout << "Eular: "<< n << endl;
+    vector<T> roots;
+    for (T g = 2; g < x; g++)
     {
-        cout << "g: " << g << endl;
+        cout << "g: ";
+        printInt128(g);
+        cout << endl;
         if (gcd(g, x) != 1)
             continue;
         if (getMinOrder(g, n, x) == n)
@@ -122,21 +145,43 @@ vector<long> findPrimitiveRoot(long x, bool get_min=true)
                 return roots;
         }
     }
-    
+
     return roots;
 }
 
-// Driver code
-int main()
+template <class T>
+void printResult(T P, vector<T> roots)
 {
-    // long P = 998244353;
-    long P = 68719403009;
-    vector<long> roots = findPrimitiveRoot(P, true);
-
-    cout << "Get primitive root of " << P << ":" << endl;;
-    for (long x : roots)
+    cout << "Get primitive root of " << P << ":" << endl;
+    for (T x : roots)
         cout << x << " ";
     cout << endl;
+}
+
+void printResultInt128(int128 P, vector<int128> roots)
+{
+    cout << "Get primitive root of ";
+    printInt128(P);
+    cout << ":" << endl;
+    for (int128 x : roots)
+    {
+        printInt128(x);
+        cout << endl;
+    }
+}
+
+int main()
+{
+    // uint64 P = 31;
+    // uint64 P = 998244353; // 30bits
+    // vector<uint64> roots = findPrimitiveRoot(P, true);
+    // printResult(P, roots);
+
+    int128 P = 68719403009; // 36bits
+    // int128 P = 68719230977; // 36bits
+    // int128 P = 137438822401; // 37bits
+    vector<int128> roots = findPrimitiveRoot(P, true);
+    printResultInt128(P, roots);
 
     return 0;
 }
